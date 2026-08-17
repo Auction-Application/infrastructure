@@ -18,3 +18,14 @@ resource "aws_s3control_access_point_policy" "auction_lot_service_access_point_p
   access_point_arn = aws_s3_access_point.auction_lot_service_access_point.arn
   policy           = data.aws_iam_policy_document.auction_lot_service_access_point_policy_document.json
 }
+
+resource "aws_s3_bucket_cors_configuration" "auction_lot_images_cors" {
+  bucket = aws_s3_bucket.auction_lot_bucket.id
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["PUT"]
+    allowed_origins = ["*"]
+    expose_headers  = ["ETag"]
+    max_age_seconds = 1800
+  }
+}
