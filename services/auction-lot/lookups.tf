@@ -1,4 +1,5 @@
 data "aws_iam_policy_document" "delegate_access_to_s3_access-points_policy_document" {
+  version = "2012-10-17"
   statement {
     effect = "Allow"
     principals {
@@ -24,6 +25,7 @@ data "aws_iam_policy_document" "delegate_access_to_s3_access-points_policy_docum
 }
 
 data "aws_iam_policy_document" "auction_lot_service_access_point_policy_document" {
+  version = "2012-10-17"
   statement {
     effect = "Allow"
     principals {
@@ -41,3 +43,31 @@ data "aws_iam_policy_document" "auction_lot_service_access_point_policy_document
     ]
   }
 }
+
+data "aws_iam_policy_document" "auction_image_s3_events_sqs_policy" {
+  version = "2012-10-17"
+  statement {
+    sid    = "allow s3 events from bucket to queues"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+    actions = [
+      "SQS:SendMessage"
+    ]
+
+    resources = [
+      aws_sqs_queue.s3_events_singlepart_queue.arn,
+      aws_sqs_queue.s3_events_multipart_queue.arn
+    ]
+
+    condition {
+      test     = "ArnEquals"
+      values   = [aws_s3_bucket.auction_lot_bucket.arn]
+      variable = "aws:SourceArn"
+    }
+  }
+}
+
+

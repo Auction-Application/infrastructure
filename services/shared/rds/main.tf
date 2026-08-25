@@ -1,7 +1,6 @@
 resource "aws_security_group" "rds_sg" {
   name        = "rds_sg"
   description = "Allow tcp 5432 for psql for all inbound traffic and outbound is all protocols"
-
 }
 
 resource "aws_vpc_security_group_ingress_rule" "allow_psql_ingress" {
@@ -19,8 +18,6 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_egress" {
   ip_protocol       = -1
   cidr_ipv4         = "0.0.0.0/0"
 }
-
-
 
 
 resource "aws_db_instance" "auction_db" {
