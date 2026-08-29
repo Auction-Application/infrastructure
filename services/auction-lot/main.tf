@@ -50,10 +50,10 @@ resource "aws_s3_bucket_notification" "auction_image_upload" {
 resource "aws_sqs_queue" "s3_events_singlepart_queue" {
   name                       = "s3-events-singlepart-queue"
   delay_seconds              = 0
-  visibility_timeout_seconds = 45
+  visibility_timeout_seconds = 181
   max_message_size           = 262144
   message_retention_seconds  = 345600
-  receive_wait_time_seconds  = 5
+  receive_wait_time_seconds  = 2
 }
 
 
@@ -61,7 +61,7 @@ resource "aws_sqs_queue" "s3_events_singlepart_queue" {
 resource "aws_sqs_queue_redrive_policy" "singlepart_redrive-policy" {
   queue_url = aws_sqs_queue.s3_events_singlepart_queue.id
   redrive_policy = jsonencode({
-    deadLetterTargetArn = aws_sqs_queue.s3_events_dlq.arn
+    deadLetterTargetArn = aws_sqs_queue.s3_events_singlepart_dlq.arn
     maxReceiveCount     = 4
   })
 }
@@ -69,22 +69,22 @@ resource "aws_sqs_queue_redrive_policy" "singlepart_redrive-policy" {
 resource "aws_sqs_queue" "s3_events_multipart_queue" {
   name                       = "s3-events-multipart-queue"
   delay_seconds              = 0
-  visibility_timeout_seconds = 45
+  visibility_timeout_seconds = 181
   max_message_size           = 262144
   message_retention_seconds  = 345600
-  receive_wait_time_seconds  = 5
+  receive_wait_time_seconds  = 2
 }
 
 resource "aws_sqs_queue_redrive_policy" "multipart_redrive-policy" {
   queue_url = aws_sqs_queue.s3_events_multipart_queue.id
   redrive_policy = jsonencode({
-    deadLetterTargetArn = aws_sqs_queue.s3_events_dlq.arn
+    deadLetterTargetArn = aws_sqs_queue.s3_events_multipart_dlq.arn
     maxReceiveCount     = 4
   })
 }
 
-resource "aws_sqs_queue" "s3_events_dlq" {
-  name                       = "s3_events_dlq"
+resource "aws_sqs_queue" "s3_events_singlepart_dlq" {
+  name                       = "s3-events-singlepart-dlq"
   delay_seconds              = 0
   visibility_timeout_seconds = 45
   max_message_size           = 262144
@@ -92,11 +92,29 @@ resource "aws_sqs_queue" "s3_events_dlq" {
   receive_wait_time_seconds  = 5
 }
 
-resource "aws_sqs_queue_redrive_allow_policy" "s3_events_dlq_policy" {
-  queue_url = aws_sqs_queue.s3_events_dlq.id
+
+resource "aws_sqs_queue_redrive_allow_policy" "s3_events_singlepart_dlq_policy" {
+  queue_url = aws_sqs_queue.s3_events_singlepart_dlq.id
   redrive_allow_policy = jsonencode({
     redrivePermission = "byQueue",
-    sourceQueueArns   = [aws_sqs_queue.s3_events_singlepart_queue.arn, aws_sqs_queue.s3_events_multipart_queue.arn]
+    sourceQueueArns   = [aws_sqs_queue.s3_events_singlepart_queue.arn]
+  })
+}
+
+resource "aws_sqs_queue" "s3_events_multipart_dlq" {
+  name                       = "s3-events-multipart-dlq"
+  delay_seconds              = 0
+  visibility_timeout_seconds = 45
+  max_message_size           = 262144
+  message_retention_seconds  = 1209600
+  receive_wait_time_seconds  = 5
+}
+
+resource "aws_sqs_queue_redrive_allow_policy" "s3_events_multipart_dlq_policy" {
+  queue_url = aws_sqs_queue.s3_events_multipart_dlq.id
+  redrive_allow_policy = jsonencode({
+    redrivePermission = "byQueue",
+    sourceQueueArns   = [aws_sqs_queue.s3_events_multipart_queue.arn]
   })
 }
 
