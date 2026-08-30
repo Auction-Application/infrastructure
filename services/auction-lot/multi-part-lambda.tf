@@ -9,12 +9,12 @@ resource "terraform_data" "function_binary_multipart" {
 data "archive_file" "function_archive_multipart" {
   depends_on  = [terraform_data.function_binary_multipart]
   type        = "zip"
-  source_file = local.multi_upload_src_path
+  source_file = local.multi_upload_src_bin_path
   output_path = local.multi_upload_archive_path
 }
 
 resource "aws_lambda_function" "multipartfile_lambda_fn" {
-  filename         = local.multi_upload_archive_path
+  filename         = data.archive_file.function_archive_multipart.output_path
   function_name    = "poll-multipartupload-event"
   role             = aws_iam_role.lambda_role_multipartfile.arn
   handler          = "bootstrap"

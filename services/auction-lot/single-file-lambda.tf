@@ -9,12 +9,12 @@ resource "terraform_data" "function_binary_singlefile" {
 data "archive_file" "function_archive_singlefile" {
   depends_on  = [terraform_data.function_binary_singlefile]
   type        = "zip"
-  source_file = local.single_upload_src_path
+  source_file = local.single_upload_src_bin_path
   output_path = local.single_upload_archive_path
 }
 
 resource "aws_lambda_function" "singlefile_lambda_fn" {
-  filename         = local.single_upload_archive_path
+  filename         = data.archive_file.function_archive_singlefile.output_path
   function_name    = "poll-singlefileupload-event"
   role             = aws_iam_role.lambda_role_singlefile.arn
   handler          = "bootstrap"

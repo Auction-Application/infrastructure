@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -11,17 +12,23 @@ func main() {
 	lambda.Start(PollMultiPartCompletionEvent)
 }
 
-func PollMultiPartCompletionEvent(event events.SQSEvent) error {
+func PollMultiPartCompletionEvent(ctx context.Context, event events.SQSEvent) (map[string]any, error) {
+	batchItemFailures := map[string]any{}
 	fmt.Println(event)
+	fmt.Println(event.Records)
+
 	for _, record := range event.Records {
 		fmt.Println(record)
 		err := processMessage(record)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 	fmt.Println("done")
-	return nil
+	sqsBatchResponse := map[string]any{
+		"batchItemFailures": batchItemFailures,
+	}
+	return sqsBatchResponse, nil
 }
 
 func processMessage(record events.SQSMessage) error {
