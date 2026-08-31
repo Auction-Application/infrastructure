@@ -1,4 +1,5 @@
 resource "terraform_data" "function_binary_multipart" {
+  triggers_replace = timestamp()
   provisioner "local-exec" {
     command     = "GOOS=linux GOARCH=amd64 CGO_ENABLED=0 GOFLAGS=-trimpath go build -mod=readonly -ldflags='-s -w' -o ${local.multi_upload_binary_path} ${local.source_location_path}"
     working_dir = local.multi_upload_working_dir
