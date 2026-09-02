@@ -4,16 +4,72 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
+
+	"multi-part-completion/internal/database/auctionLot"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-secretsmanager-caching-go/secretcache"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
+
+var (
+	secretCache, _ = secretcache.New()
+	secretName     = "rds!db-9ddeac60-086e-4667-b1db-b9817424bedf"
+)
+
+var dbConn *pgx.Conn
+
+func init() {
+	secretValue, err := secretCache.GetSecretString(secretName)
+	if err != nil {
+		panic(fmt.Sprintf("cannot get secretValue %v", err))
+	}
+	fmt.Println(secretValue)
+
+	var storedSecret storedSecret
+
+	err = json.Unmarshal([]byte(secretValue), &storedSecret)
+	if err != nil {
+		panic(fmt.Sprintf("cannot unmarshal json %v", err))
+	}
+	dbConn, err = ConnectToDB(storedSecret)
+	if err != nil {
+		panic(fmt.Sprintf("cannot connect to db %v", err))
+	}
+
+	// dbConn=dbConnection
+}
 
 func main() {
 	lambda.Start(PollMultiPartCompletionEvent)
 }
 
+type storedSecret struct {
+	Username string
+	Password string
+}
+
 func PollMultiPartCompletionEvent(ctx context.Context, event events.SQSEvent) (map[string]any, error) {
+	// sqsBatchErrorResponse := map[string]any{
+	// 	"batchItemFailures": []map[string]any{
+	// 		{"itemIdentifier": nil},
+	// 	},
+	// }
+
+	// secretValue, err := secretCache.GetSecretString(secretName)
+	// if err != nil {
+	// 	return sqsBatchErrorResponse, nil
+	// }
+	// var storedSecret storedSecret
+
+	// err = json.Unmarshal([]byte(secretValue), &storedSecret)
+	// if err != nil {
+	// 	return sqsBatchErrorResponse, nil
+	// }
+
 	batchItemFailures := []map[string]any{}
 	eventJson, err := json.Marshal(event)
 	if err != nil {
@@ -24,9 +80,11 @@ func PollMultiPartCompletionEvent(ctx context.Context, event events.SQSEvent) (m
 
 	for _, record := range event.Records {
 		// fmt.Println(record)
-		err := processMessage(record)
-		if err != nil {
-			return nil, err
+		messageId := processMessage(record)
+		if messageId != "" {
+			batchItemFailures = append(batchItemFailures, map[string]any{
+				"itemIdentifier": messageId,
+			})
 		}
 	}
 	fmt.Println("done")
@@ -37,18 +95,46 @@ func PollMultiPartCompletionEvent(ctx context.Context, event events.SQSEvent) (m
 	return sqsBatchResponse, nil
 }
 
-func processMessage(record events.SQSMessage) error {
+func processMessage(record events.SQSMessage) string {
 	var s3Event events.S3Event
 	err := json.Unmarshal([]byte(record.Body), &s3Event)
 	if err != nil {
-		return err
+		return record.MessageId
 	}
 
 	for _, s3Record := range s3Event.Records {
 		fmt.Println(s3Record.S3.Object.Key)
+		objectKeyUUID := uuid.MustParse(s3Record.S3.Object.Key)
+		err = auctionLot.New(dbConn).CommitMultiPartUpload(context.TODO(), objectKeyUUID)
+		if err != nil {
+			return record.MessageId
+		}
 	}
 
 	// fmt.Printf("Processed message %s\n", record.Body)
 	// TODO: Do interesting work based on the new message
-	return nil
+	// return nil
+	return ""
+}
+
+func ConnectToDB(storedSecret storedSecret) (*pgx.Conn, error) {
+	databaseUrl := fmt.Sprintf("postgres://%s:%s@terraform-148910a5122fee625a80acf0c3.cd8cmm6ks70a.ap-south-1.rds.amazonaws.com:5432/auction_lot_db?sslmode=require", storedSecret.Username, url.QueryEscape(storedSecret.Password))
+	conn, err := pgx.Connect(context.Background(), databaseUrl)
+	if err != nil {
+		// fmt.Fprintf(os.Stderr, "Unable to connect to database:%v\n", err)
+		// os.Exit(1)
+		return nil, err
+	}
+
+	// ctx := context.Background()
+
+	// pingErr := conn.Ping(ctx)
+
+	// if pingErr != nil {
+	// fmt.Println("Cannot ping to database")
+	// os.Exit(1)
+	// return nil,err
+	// }
+
+	return conn, nil
 }
