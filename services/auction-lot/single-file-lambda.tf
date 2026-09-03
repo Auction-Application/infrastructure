@@ -76,3 +76,8 @@ resource "aws_iam_role_policy_attachment" "lambda_sqs_singlefile_policy_logs" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "lambda_secretmanager_singlefile_attach" {
+  role       = aws_iam_role.lambda_role_singlefile.name
+  policy_arn = aws_iam_policy.lambda_secret_manager_access_rds.arn
+}
+

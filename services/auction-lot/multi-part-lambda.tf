@@ -64,25 +64,7 @@ resource "aws_iam_policy" "lambda_sqs_policy_multipartfile" {
   policy      = data.aws_iam_policy_document.lambda_sqs_policy_multipartfile_docx.json
 }
 
-data "aws_iam_policy_document" "lambda_secret_manager_access_rds_docx" {
-  version = "2012-10-17"
-  statement {
-    sid    = "accessToSecretManagerForRDS"
-    effect = "Allow"
-    actions = [
-      "secretsmanager:GetSecretValue",
-      "secretsmanager:DescribeSecret"
-    ]
-    resources = ["arn:aws:secretsmanager:ap-south-1:433154991296:secret:rds!db-9ddeac60-086e-4667-b1db-b9817424bedf-0RcZpS"]
-  }
-}
 
-resource "aws_iam_policy" "lambda_secret_manager_access_rds" {
-  name        = "lambda-secret-access-rds"
-  path        = "/"
-  description = "This policy gives access to secret manager"
-  policy      = data.aws_iam_policy_document.lambda_secret_manager_access_rds_docx.json
-}
 
 
 
@@ -95,7 +77,7 @@ resource "aws_iam_role_policy_attachment" "lambda_sqs_multipartfile_policy_logs"
   role       = aws_iam_role.lambda_role_multipartfile.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
-resource "aws_iam_role_policy_attachment" "lambda_secretmanager_attach" {
+resource "aws_iam_role_policy_attachment" "lambda_secretmanager_multipart_attach" {
   role       = aws_iam_role.lambda_role_multipartfile.name
   policy_arn = aws_iam_policy.lambda_secret_manager_access_rds.arn
 }

@@ -1,0 +1,2 @@
+-- name: CommitSingleFileUpload :exec
+update image_blob_upload_attempts set upload_state='committed',verified=true where upload_type='singleUpload' and storage_key= sqlc.arg(storage_key)::uuid and upload_state='pending';
