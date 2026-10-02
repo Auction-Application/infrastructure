@@ -44,6 +44,8 @@ resource "aws_s3_bucket_notification" "auction_image_upload" {
     events    = ["s3:ObjectCreated:CompleteMultipartUpload"]
   }
 
+  depends_on = [aws_sqs_queue_policy.auction_image_multipart_s3_events_access, aws_sqs_queue_policy.auction_image_singlepart_s3_events_access]
+
 }
 
 
