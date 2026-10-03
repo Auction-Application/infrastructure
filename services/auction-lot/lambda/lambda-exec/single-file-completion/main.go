@@ -17,7 +17,8 @@ import (
 
 var (
 	secretCache, _ = secretcache.New()
-	secretName     = "rds!db-9ddeac60-086e-4667-b1db-b9817424bedf"
+	// todo make secretName dynamic, maybe from environment variable
+	secretName = "rds!db-b6f333a5-ad18-461d-89b7-3b4a8beddf6c"
 )
 
 var dbConn *pgx.Conn
@@ -101,7 +102,8 @@ func processMessage(record events.SQSMessage) string {
 }
 
 func ConnectToDB(storedSecret storedSecret) (*pgx.Conn, error) {
-	databaseUrl := fmt.Sprintf("postgres://%s:%s@terraform-148910a5122fee625a80acf0c3.cd8cmm6ks70a.ap-south-1.rds.amazonaws.com:5432/auction_lot_db?sslmode=require", storedSecret.Username, url.QueryEscape(storedSecret.Password))
+	// todo make database connection url dynamic, maybe from environment variable
+	databaseUrl := fmt.Sprintf("postgres://%s:%s@terraform-c94db1584adb935d6d8f579ab8.cd8cmm6ks70a.ap-south-1.rds.amazonaws.com:5432/auction_db?sslmode=require", storedSecret.Username, url.QueryEscape(storedSecret.Password))
 	conn, err := pgx.Connect(context.Background(), databaseUrl)
 	if err != nil {
 		// fmt.Fprintf(os.Stderr, "Unable to connect to database:%v\n", err)

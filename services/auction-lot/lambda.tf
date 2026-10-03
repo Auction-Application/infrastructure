@@ -24,7 +24,8 @@ data "aws_iam_policy_document" "lambda_secret_manager_access_rds_docx" {
       "secretsmanager:GetSecretValue",
       "secretsmanager:DescribeSecret"
     ]
-    resources = ["arn:aws:secretsmanager:ap-south-1:433154991296:secret:rds!db-9ddeac60-086e-4667-b1db-b9817424bedf-0RcZpS"]
+    # todo rds is in a separate terraform state, use input variable 
+    resources = ["arn:aws:secretsmanager:ap-south-1:433154991296:secret:rds!db-b6f333a5-ad18-461d-89b7-3b4a8beddf6c-O4yFgJ"]
   }
 }
 
