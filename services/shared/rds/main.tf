@@ -13,10 +13,23 @@ resource "aws_vpc_security_group_ingress_rule" "allow_psql_ingress" {
 
 resource "aws_vpc_security_group_egress_rule" "allow_all_egress" {
   security_group_id = aws_security_group.rds_sg.id
-  from_port         = 0
-  to_port           = 0
   ip_protocol       = -1
   cidr_ipv4         = "0.0.0.0/0"
+}
+
+resource "aws_db_parameter_group" "cdc_stream" {
+  name_prefix = "cdc-stream-pg"
+  family      = "postgres18"
+
+  parameter {
+    name         = "rds.logical_replication"
+    value        = "1"
+    apply_method = "pending-reboot"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 
@@ -35,6 +48,8 @@ resource "aws_db_instance" "auction_db" {
   username                    = "auction_app"
   port                        = 5432
   vpc_security_group_ids      = [aws_security_group.rds_sg.id]
+  parameter_group_name        = aws_db_parameter_group.cdc_stream.name
+  apply_immediately           = true
 }
 
 
