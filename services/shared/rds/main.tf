@@ -26,6 +26,16 @@ resource "aws_db_parameter_group" "cdc_stream" {
     value        = "1"
     apply_method = "pending-reboot"
   }
+  parameter {
+    name         = "max_wal_senders"
+    value        = "5"
+    apply_method = "pending-reboot"
+  }
+  parameter {
+    name         = "max_replication_slots"
+    value        = "5"
+    apply_method = "pending-reboot"
+  }
 
   lifecycle {
     create_before_destroy = true
@@ -34,6 +44,7 @@ resource "aws_db_parameter_group" "cdc_stream" {
 
 
 resource "aws_db_instance" "auction_db" {
+  identifier                  = "file-upload-db"
   allocated_storage           = 10
   max_allocated_storage       = 20
   db_name                     = "auction_db"
