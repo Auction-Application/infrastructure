@@ -18,7 +18,7 @@ import (
 var (
 	secretCache, _ = secretcache.New()
 	// todo make secretName dynamic, maybe from environment variable
-	secretName = "rds!db-ef6ad9e0-683b-4eb9-a669-813626121c38"
+	secretName = "rds!db-4fd2be6c-d63e-46e3-b153-0be11971a74c"
 )
 
 var dbConn *pgx.Conn
