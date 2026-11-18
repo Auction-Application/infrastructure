@@ -36,6 +36,11 @@ resource "aws_db_parameter_group" "cdc_stream" {
     value        = "5"
     apply_method = "pending-reboot"
   }
+  parameter {
+    name         = "max_slot_wal_keep_size"
+    value        = "4096"
+    apply_method = "pending-reboot"
+  }
 
   lifecycle {
     create_before_destroy = true
